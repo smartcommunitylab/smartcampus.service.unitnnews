@@ -1,0 +1,9 @@
+package smartcampus.service.unitnnews.data.message;
+
+import "core.proto";
+
+message NewsEntry {
+	required string title = 1;
+	required string content = 2;
+	optional string source = 3;
+}

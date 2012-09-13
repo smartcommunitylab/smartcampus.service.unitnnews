@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataflow xmlns="http://www.example.org/mml-schema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.example.org/mml-schema mml-schema.xsd ">
+
+	<input name="baseurl" type="String" />
+	<input name="variableurl" type="String" />
+	<input name="source" type="String" />
+	
+
+	<variable name="unitnnewsHome" type="org.w3c.dom.Document" />
+	<variable name="entryPage" type="org.w3c.dom.Document" />
+
+	<variable name="links" type="java.util.Collection">
+		<body>new java.util.ArrayList();</body>
+	</variable>
+	
+	<variable name="newsEntry" type="java.util.Collection">
+		<body>new java.util.ArrayList();</body>
+	</variable>	
+
+	<httpConnector name="unitnnewsConnector" method="GET" encoding="UTF-8"/>
+
+	<connect name="c1" connector="unitnnewsConnector" outputVar="unitnnewsHome">
+		<properties>
+			<property name="url">
+				<value>baseurl +"/" + variableurl + "/news"</value>
+			</property>
+		</properties>
+	</connect>
+
+	<script outputVar="links" writeMethod="addAll" writeAction="append">
+		<className>smartcampus.service.unitnnews.script.UnitnNewsScript</className>
+		<method>extractUnitnLinks</method>
+		<variables>
+			<value>unitnnewsHome</value>
+		</variables>		
+	</script>
+	
+	<foreach name="fe1" item="link" 
+		itemClass="java.lang.String" 
+		aggregateVariable="newsList" 
+		outputVar="output" writeAction="append" writeMethod="addAll">
+		
+		<items>links</items>
+		
+		<connect name="c2" connector="unitnnewsConnector" outputVar="entryPage" onError="continue">
+			<properties>
+				<property name="url">
+					<value>baseurl + link</value>
+				</property>
+			</properties>
+		</connect>	
+		
+	<script outputVar="newsList" writeMethod="add" writeAction="append">
+		<className>smartcampus.service.unitnnews.script.UnitnNewsScript</className>
+		<method>extractUnitnContent</method>
+		<variables>
+			<value>entryPage</value>
+			<value>source</value>
+		</variables>				
+	</script>		
+	
+	</foreach>
+	
+	
+	
+	
+	
+
+</dataflow>

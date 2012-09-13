@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:util="http://www.springframework.org/schema/util" 
+	xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:broker="http://activemq.apache.org/schema/core" 
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+      http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+      http://www.springframework.org/schema/tx
+  		http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+  		http://www.springframework.org/schema/aop 
+  		http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+  		http://www.springframework.org/schema/util
+  		http://www.springframework.org/schema/util/spring-util-3.0.xsd
+  		http://www.springframework.org/schema/jee
+  		http://www.springframework.org/schema/jee/spring-jee-3.0.xsd
+      http://www.springframework.org/schema/jms 
+      http://www.springframework.org/schema/jms/spring-jms-3.0.xsd
+      http://www.springframework.org/schema/data/mongo
+      http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd      
+      http://www.springframework.org/schema/context 
+      http://www.springframework.org/schema/context/spring-context-3.0.xsd
+			http://www.springframework.org/schema/task 
+			http://www.springframework.org/schema/task/spring-task-3.0.xsd"
+	default-lazy-init="false">
+
+	<bean id="hibernateTransactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="hibernateAnnotationSessionFactory" />
+	</bean>
+
+	<bean id="hibernateAnnotationSessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="configurationClass">
+			<value>org.hibernate.cfg.AnnotationConfiguration</value>
+		</property>
+		<property name="packagesToScan">
+			<list>
+				<value>it.sayservice.platform.core.bus.data.entity</value>
+				<value>smartcampus.service</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<!-- SQL dialect -->
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQL5InnoDBDialect</prop>
+				<prop key="hibernate.cache.use_query_cache">false</prop>
+				<!-- Disable the second-level cache -->
+				<prop key="hibernate.cache.provider_class">org.hibernate.cache.NoCacheProvider</prop>
+				<!-- <prop key="hibernate.cache.provider_class">org.hibernate.cache.OSCacheProvider</prop> -->
+				<!-- Enable Hibernate's automatic session context management -->
+				<!-- Echo all executed SQL to stdout -->
+				<prop key="hibernate.show_sql">false</prop>
+				<prop key="hibernate.format_sql">true</prop>
+				<!-- update the database schema on startup -->
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+				<!-- <prop key="hibernate.bytecode.use_reflection_optimizer">false</prop> -->
+			</props>
+		</property>
+	</bean>
+
+	<!-- Transaction Configuration -->
+	<tx:annotation-driven transaction-manager="hibernateTransactionManager" />
+
+	<!-- DAO Definition -->
+	<bean id="busPersistenceEngineDAO"
+		class="it.sayservice.platform.core.bus.service.persistence.PersistenceEngine">
+		<property name="sessionFactory" ref="hibernateAnnotationSessionFactory" />
+	</bean>
+
+	<bean id="eventPersistenceDAO"
+		class="it.sayservice.platform.core.bus.service.persistence.ServiceExecutionEventPersistence">
+		<constructor-arg ref="busPersistenceEngineDAO" />
+	</bean>
+
+	<bean id="monitoringRulesDAO"
+		class="it.sayservice.platform.core.bus.data.dao.MonitoringRulesDAO">
+		<property name="sessionFactory" ref="hibernateAnnotationSessionFactory" />
+	</bean>
+	
+	<bean id="validationRulesDAO"
+		class="it.sayservice.platform.core.bus.data.dao.ValidationRulesDAO">
+		<property name="sessionFactory" ref="hibernateAnnotationSessionFactory" />
+	</bean>
+	
+	<bean id="resourceDataDAO"
+		class="it.sayservice.platform.core.bus.data.dao.ResourceDataDAO">
+		<property name="sessionFactory" ref="hibernateAnnotationSessionFactory" />
+	</bean>	
+	
+	<bean id="serviceStatusDAO"
+		class="it.sayservice.platform.core.bus.data.dao.ServiceStatusDAO">
+		<property name="sessionFactory" ref="hibernateAnnotationSessionFactory" />
+	</bean>	
+	
+	<!-- Caching -->
+	<bean id="cacheManagerFactory" class="it.sayservice.platform.core.bus.cache.CacheManagerFactory">
+		<constructor-arg value="ehcache.xml" />
+	</bean>
+
+	<!-- Handler messaggi interni della piattaforma -->
+	<bean id="busServiceHandler"
+		class="it.sayservice.platform.core.bus.service.handler.BusServiceHandler">
+		<constructor-arg ref="rulesEngineManager" />
+		<constructor-arg ref="monitoringRulesEngineManager" />
+	</bean>
+
+	<bean id="dataflowExecEventHandler"
+		class="it.sayservice.platform.core.bus.service.handler.DataFlowExecutionEventHandler">
+		<constructor-arg ref="eventPersistenceDAO" />
+		<constructor-arg ref="rulesEngineManager" />
+	</bean>
+
+	<bean id="serviceExecEventHandler"
+		class="it.sayservice.platform.core.bus.service.handler.ServiceExecutionEventHandler">
+		<constructor-arg ref="eventPersistenceDAO" />
+		<constructor-arg ref="monitoringRulesEngineManager" />
+	</bean>
+
+	<bean id="serviceFindEventHandler"
+		class="it.sayservice.platform.core.bus.service.handler.ServiceFindEventHandler">
+		<constructor-arg ref="eventPersistenceDAO" />
+	</bean>
+
+	<bean id="monitoringRuleHandler"
+		class="it.sayservice.platform.core.bus.service.handler.MonitoringRuleHandler">
+		<constructor-arg ref="monitoringRulesEngineManager" />
+		<constructor-arg ref="monitoringRulesDAO" />
+		<constructor-arg ref="eventPersistenceDAO" />
+		<constructor-arg ref="defaultEventPersistenceConf" />
+		<constructor-arg ref="monitoringRulesFiles" />
+	</bean>
+	
+	<!-- Platform Thread Pool -->
+	<bean id="platformGenericThreadPoolTaskExecutor"
+		class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+		<property name="corePoolSize" value="5" />
+		<property name="maxPoolSize" value="75" />
+		<property name="keepAliveSeconds" value="5" />
+		<property name="queueCapacity" value="150" />
+	</bean>
+
+	<bean id="doQueueThreadPoolTaskExecutor"
+		class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+		<property name="corePoolSize" value="25" />
+		<property name="maxPoolSize" value="250" />
+		<property name="keepAliveSeconds" value="5" />
+		<property name="queueCapacity" value="750" />
+	</bean>
+	
+	<!-- Service related beans -->
+	<bean id="rulesEngineManager"
+		class="it.sayservice.platform.core.bus.service.management.RulesEngineManager">
+		<constructor-arg>
+			<map>
+				<entry key="java" value-ref="javaRulesEngine" />
+				<entry key="xsd" value-ref="xsdRulesEngine" />
+				<entry key="drools" value-ref="droolsRulesEngine" />
+			</map>
+		</constructor-arg>
+	</bean>
+
+	<bean id="monitoringRulesEngineManager"
+		class="it.sayservice.platform.core.bus.service.management.MonitoringRulesEngineManager">
+		<constructor-arg>
+			<map>
+				<entry key="drools" value-ref="droolsMonitoringRulesEngine" />
+			</map>
+		</constructor-arg>
+	</bean>
+
+	<bean id="serviceManagementEngine"
+		class=" it.sayservice.platform.core.bus.service.management.ServiceManagementEngine" />
+
+	<bean id="serviceDataFlowManagementEngine"
+		class=" it.sayservice.platform.core.bus.service.management.ServiceDataFlowManagementEngine">
+		<constructor-arg ref="rulesEngineManager" />
+	</bean>
+
+	<bean id="serviceManagementAction"
+		class="it.sayservice.platform.core.bus.service.management.impl.ServiceManagementActionImpl">
+		<constructor-arg ref="serviceStatusDAO" />
+	</bean>
+
+	<bean id="communicationAction"
+		class="it.sayservice.platform.core.bus.service.monitoring.impl.CommunicationActionImpl">
+		<constructor-arg ref="platformMessageGateway" />
+		<property name="mailSender" ref="mailSender" />
+		<property name="templateMessage" ref="templateMessage" />
+	</bean>
+
+	<!-- Validation Rules Engine -->
+	<bean id="javaRulesEngine"
+		class="it.sayservice.platform.core.bus.service.validation.rule.JavaRulesEngine">
+		<property name="communicationAction" ref="communicationAction" />
+	</bean>
+
+	<bean id="xsdRulesEngine"
+		class="it.sayservice.platform.core.bus.service.validation.rule.XSDRulesEngine">
+		<constructor-arg ref="resourceDataDAO"/>
+		<property name="communicationAction" ref="communicationAction" />
+	</bean>
+
+	<bean id="droolsRulesEngine"
+		class="it.sayservice.platform.core.bus.service.validation.rule.drools.DroolsServiceValidationEngine">
+		<property name="communicationAction" ref="communicationAction" />
+	</bean>
+
+
+	<!-- Monitoring Rules Engine -->
+	<bean id="droolsMonitoringRulesEngine"
+		class="it.sayservice.platform.core.bus.service.monitoring.rule.drools.DroolsServiceMonitoringEngine">
+		<property name="serviceManagementAction" ref="serviceManagementAction" />
+		<property name="communicationAction" ref="communicationAction" />
+	</bean>
+
+
+	<!-- JMX -->
+	<bean id="remoteManagement"
+		class="it.sayservice.platform.core.bus.service.management.jmx.RemoteManagement">
+		<constructor-arg ref="eventPersistenceDAO" />
+	</bean>
+
+	<!-- POI -->
+	<bean name="poiDataHandler" class="it.sayservice.platform.core.bus.poi.POIDataHandler">
+		<constructor-arg ref="busPersistenceEngineDAO" />
+	</bean>
+
+	<bean name="geocodingService"
+		class="it.sayservice.platform.core.bus.poi.impl.GoogleGeocodingService" />
+
+
+	<!-- Mail Service -->
+	<bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<property name="host" value="${mail.smtp.host}" />
+		<property name="port" value="${mail.smtp.port}" />
+	</bean>
+
+	<bean id="templateMessage" class="org.springframework.mail.SimpleMailMessage">
+		<property name="from" value="${mail.from}" />
+		<property name="to" value="${mail.to}" />
+		<property name="subject" value="${mail.subject}" />
+	</bean>
+
+	<!-- XSS -->
+	<bean id="xssParserFactory" class="it.sayservice.xss.internal.parser.DefaultParserFactory"/>
+	
+	<!-- Quartz Scheduler -->
+	<bean id="schedulerFactory" class="org.quartz.impl.StdSchedulerFactory">
+		<constructor-arg>
+			<props>
+	            <prop key="org.quartz.scheduler.instanceName">Quartz Scheduler</prop>
+	            <prop key="org.quartz.threadPool.class">org.quartz.simpl.SimpleThreadPool</prop>
+	            <prop key="org.quartz.threadPool.threadCount">20</prop>
+	            <prop key="org.quartz.jobStore.class">org.quartz.simpl.RAMJobStore</prop>
+	            <prop key="org.quartz.scheduler.jobFactory.class">org.quartz.simpl.SimpleJobFactory</prop>
+	        </props>
+		</constructor-arg>
+	</bean>
+	
+
+	<!-- Task Scheduling -->
+	<task:scheduled-tasks scheduler="platformScheduler">
+		<task:scheduled ref="execEventTask" method="clearExecutionEvents"
+			cron="0 */15 * * * ?" />
+		<task:scheduled ref="serviceDataChangeActivator" method="checkSubscriptionEvents"
+			cron="0 */1 * * * ?" />
+	</task:scheduled-tasks>
+
+	<task:scheduler id="platformScheduler" pool-size="2" />
+
+	<bean id="execEventTask"
+		class="it.sayservice.platform.core.bus.service.management.impl.ExecutionEventTaskImpl">
+		<constructor-arg ref="eventPersistenceDAO" />
+	</bean>
+	
+	
+	<!-- Service Parameters -->
+	<bean id="serviceParameters" class="it.sayservice.platform.core.bus.service.ServiceParameters">
+		<constructor-arg ref="platformMessageGateway"/>
+		<constructor-arg ref="busPersistenceEngineDAO"/>
+		<constructor-arg ref="serviceManagementEngine"/>
+		<constructor-arg ref="serviceDataFlowManagementEngine"/>	
+		<constructor-arg ref="cacheManagerFactory"/>
+		<constructor-arg ref="serviceStatusDAO" />
+		<constructor-arg ref="resourceDataDAO" />
+		<constructor-arg ref="schedulerFactory" />
+		<constructor-arg ref="mongoConnector"/>
+	 </bean>	
+	
+	
+	<!-- Mongo -->
+	<bean id="mongoConnector" class=" it.sayservice.platform.core.bus.data.mongo.MongoConnector">
+		<constructor-arg value="${mongodb.host}"/>
+		<constructor-arg value="${mongodb.port}"/>
+		<constructor-arg value="${mongodb.connections}"/>
+		<constructor-arg value="${mongodb.db}"/>
+		<constructor-arg value="${mongodb.collection}"/>
+  </bean>
+	
+	<!-- Remote invocation -->
+	<bean id="localServiceExecutorParameters" class="it.sayservice.platform.core.bus.service.ServiceExecutorParameters">
+		<property name="remote">
+			<value>false</value>
+		</property>
+	</bean>		
+	
+</beans>

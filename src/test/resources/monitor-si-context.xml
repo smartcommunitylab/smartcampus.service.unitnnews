@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx" 
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:jee="http://www.springframework.org/schema/jee" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:si="http://www.springframework.org/schema/integration" 
+	xmlns:stream="http://www.springframework.org/schema/integration/stream"
+	xmlns:jms="http://www.springframework.org/schema/integration/jms"
+	xmlns:http="http://www.springframework.org/schema/integration/http"
+	xmlns:file="http://www.springframework.org/schema/integration/file"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+      http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+      http://www.springframework.org/schema/tx
+  		http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+  		http://www.springframework.org/schema/aop 
+  		http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+  		http://www.springframework.org/schema/util
+  		http://www.springframework.org/schema/util/spring-util-3.0.xsd
+  		http://www.springframework.org/schema/jee
+  		http://www.springframework.org/schema/jee/spring-jee-3.0.xsd
+      http://www.springframework.org/schema/jms 
+      http://www.springframework.org/schema/jms/spring-jms-3.0.xsd
+      http://www.springframework.org/schema/context 
+      http://www.springframework.org/schema/context/spring-context-3.0.xsd
+      http://www.springframework.org/schema/integration
+      http://www.springframework.org/schema/integration/spring-integration-2.0.xsd
+      http://www.springframework.org/schema/integration/stream
+      http://www.springframework.org/schema/integration/stream/spring-integration-stream-2.0.xsd
+      http://www.springframework.org/schema/integration/jms
+      http://www.springframework.org/schema/integration/jms/spring-integration-jms-2.0.xsd
+      http://www.springframework.org/schema/integration/file
+			http://www.springframework.org/schema/integration/file/spring-integration-file-2.0.xsd
+      http://www.springframework.org/schema/integration/http
+      http://www.springframework.org/schema/integration/http/spring-integration-http-2.0.xsd
+			http://www.springframework.org/schema/task 
+			http://www.springframework.org/schema/task/spring-task-3.0.xsd">
+
+	<!-- Spring Integration configuration -->
+	<si:channel id="monitorProtoRequest">
+<!-- 		<si:queue capacity="512"/> -->
+	</si:channel>
+	<si:chain input-channel="monitorProtoRequest" output-channel="monitorRequest">
+		<si:header-enricher>
+			<si:header name="OUTCHANNEL" value="PROTO" />
+		</si:header-enricher>
+	</si:chain>
+
+	<!-- Service Bus request -->
+	<si:channel id="monitorRequest" />
+	<si:router input-channel="monitorRequest" ref="monitoringActionRequestRouter" />
+	<bean id="monitoringActionRequestRouter" class="it.sayservice.platform.core.bus.si.router.OperationRequestRouter">
+		<property name="channels">
+			<map>
+				<entry key="CONNECTOR_EXECUTION" value="performDataFlowEventInvoke" />
+				<entry key="NODE_EXECUTION" value="performDataFlowEventInvoke" />
+				<entry key="XSS_PARSING" value="performDataFlowEventInvoke" />
+				<entry key="VARIABLE_VALIDATION" value="performDataFlowEventInvoke" />
+				<entry key="DATAFLOW_EXECUTION" value="performServiceEventInvoke" />
+				<entry key="DATA_UPDATE" value="performServiceEventInvoke" />
+				<entry key="CUSTOM_EVENT" value="performServiceEventInvoke" />
+				<entry key="DATA_VALIDITY" value="performServiceEventInvoke" />
+				<entry key="UPLOAD_MONITORING_RULE" value="uploadMonitoringInvoke" />
+				<entry key="DELETE_MONITORING_RULE" value="deleteMonitoringInvoke" />
+				<entry key="INIT_SERVICE_RULE" value="initMonitoringInvoke" />
+				<entry key="GET_MONITORING_RULES" value="getMonitoringInvoke" />
+			</map>
+		</property>
+	</bean>
+	
+	<si:channel id="performDataFlowEventInvoke"/>
+	<si:service-activator input-channel="performDataFlowEventInvoke"
+		ref="dataflowExecutionEventActivator" method="handleMessage" />
+	
+	<si:channel id="performServiceEventInvoke"/>
+	<si:service-activator input-channel="performServiceEventInvoke"
+		ref="serviceExecutionEventActivator" method="handleMessage" />
+	
+	<si:channel id="uploadMonitoringInvoke"/>	
+	<si:service-activator input-channel="uploadMonitoringInvoke"
+		ref="monitorAdminActivator" method="uploadMonitoringRules" output-channel="platformResponse" />	
+	
+	<si:channel id="deleteMonitoringInvoke"/>
+	<si:service-activator input-channel="deleteMonitoringInvoke"
+		ref="monitorAdminActivator" method="deleteMonitoringRules" output-channel="platformResponse" />
+	
+	<si:channel id="initMonitoringInvoke"/>
+	<si:service-activator input-channel="initMonitoringInvoke"
+		ref="monitorAdminActivator" method="initializeServiceMethodRules" />
+	
+	<si:channel id="getMonitoringInvoke"/>
+	<si:service-activator input-channel="getMonitoringInvoke"
+		ref="monitorAdminActivator" method="getMonitoringRules" output-channel="platformResponse" />
+		
+	<!-- Activator -->
+	<bean id="dataflowExecutionEventActivator"
+		class="it.sayservice.platform.core.bus.si.activator.impl.DataFlowExecutionEventActivatorImpl">
+		<constructor-arg ref="dataflowExecEventHandler" />
+	</bean>
+	
+	<bean id="serviceExecutionEventActivator"
+		class="it.sayservice.platform.core.bus.si.activator.impl.ServiceExecutionEventActivatorImpl">
+		<constructor-arg ref="serviceExecEventHandler" />
+	</bean>
+	
+	<bean id="monitorAdminActivator"
+		class="it.sayservice.platform.core.bus.si.activator.impl.MonitorAdminActivatorImpl">
+		<constructor-arg ref="monitoringRuleHandler" />
+	</bean>
+	
+</beans>

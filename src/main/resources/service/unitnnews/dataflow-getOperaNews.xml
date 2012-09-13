@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataflow xmlns="http://www.example.org/mml-schema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.example.org/mml-schema mml-schema.xsd ">
+
+	<variable name="operanewsHome" type="org.w3c.dom.Document" />
+	<variable name="entryPage" type="org.w3c.dom.Document" />
+
+	<variable name="links" type="java.util.Collection">
+		<body>new java.util.ArrayList();</body>
+	</variable>
+	
+	<variable name="newsEntry" type="java.util.Collection">
+		<body>new java.util.ArrayList();</body>
+	</variable>	
+
+	<httpConnector name="unitnnewsConnector" method="GET" encoding="UTF-8"/>
+
+	<connect name="c1" connector="unitnnewsConnector" outputVar="operanewsHome">
+		<properties>
+			<property name="url">
+				<value>"http://www.operauni.tn.it/cms-01.00/articolo.asp?idcms=6&amp;s=21"</value>
+			</property>
+		</properties>
+	</connect>
+
+	<script outputVar="links" writeMethod="addAll" writeAction="append">
+		<className>smartcampus.service.unitnnews.script.UnitnNewsScript</className>
+		<method>extractOperaLinks</method>
+		<variables>
+			<value>operanewsHome</value>
+		</variables>		
+	</script>
+	
+	<foreach name="fe1" item="link" 
+		itemClass="java.lang.String" 
+		aggregateVariable="newsList" 
+		outputVar="output" writeAction="append" writeMethod="addAll">
+		
+		<items>links</items>
+		
+		<connect name="c2" connector="unitnnewsConnector" outputVar="entryPage" onError="continue">
+			<properties>
+				<property name="url">
+					<value>"http://www.operauni.tn.it" + link</value>
+				</property>
+			</properties>
+		</connect>	
+		
+	<script outputVar="newsList" writeMethod="add" writeAction="append">
+		<className>smartcampus.service.unitnnews.script.UnitnNewsScript</className>
+		<method>extractOperaContent</method>
+		<variables>
+			<value>entryPage</value>
+		</variables>		
+	</script>		
+	
+	</foreach>
+	
+	
+	
+	
+	
+
+</dataflow>

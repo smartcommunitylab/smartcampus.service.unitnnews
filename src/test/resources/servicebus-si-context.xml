@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx" 
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:jee="http://www.springframework.org/schema/jee" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:si="http://www.springframework.org/schema/integration" 
+	xmlns:stream="http://www.springframework.org/schema/integration/stream"
+	xmlns:jms="http://www.springframework.org/schema/integration/jms"
+	xmlns:http="http://www.springframework.org/schema/integration/http"
+	xmlns:file="http://www.springframework.org/schema/integration/file"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+      http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+      http://www.springframework.org/schema/tx
+  		http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+  		http://www.springframework.org/schema/aop 
+  		http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+  		http://www.springframework.org/schema/util
+  		http://www.springframework.org/schema/util/spring-util-3.0.xsd
+  		http://www.springframework.org/schema/jee
+  		http://www.springframework.org/schema/jee/spring-jee-3.0.xsd
+      http://www.springframework.org/schema/jms 
+      http://www.springframework.org/schema/jms/spring-jms-3.0.xsd
+      http://www.springframework.org/schema/context 
+      http://www.springframework.org/schema/context/spring-context-3.0.xsd
+      http://www.springframework.org/schema/integration
+      http://www.springframework.org/schema/integration/spring-integration-2.0.xsd
+      http://www.springframework.org/schema/integration/stream
+      http://www.springframework.org/schema/integration/stream/spring-integration-stream-2.0.xsd
+      http://www.springframework.org/schema/integration/jms
+      http://www.springframework.org/schema/integration/jms/spring-integration-jms-2.0.xsd
+      http://www.springframework.org/schema/integration/http
+      http://www.springframework.org/schema/integration/http/spring-integration-http-2.0.xsd
+      http://www.springframework.org/schema/integration/file
+			http://www.springframework.org/schema/integration/file/spring-integration-file-2.0.xsd
+			http://www.springframework.org/schema/task 
+			http://www.springframework.org/schema/task/spring-task-3.0.xsd">
+
+	<!-- Spring Integration configuration -->
+	<si:channel id="SIProtoRequest">
+	</si:channel>
+	<si:chain input-channel="SIProtoRequest" output-channel="serviceBusRequest">
+		<si:header-enricher>
+			<si:header name="OUTCHANNEL" value="PROTO" />
+		</si:header-enricher>
+	</si:chain>
+
+	<si:channel id="JMSProtoRequest" />
+	<si:chain input-channel="JMSProtoRequest" output-channel="serviceBusRequest">
+		<si:header-enricher>
+			<si:header name="OUTCHANNEL" value="PROTOJMS" />
+		</si:header-enricher>
+	</si:chain>
+	
+	<!-- Service Bus request -->
+	<si:channel id="serviceBusRequest" />
+	<si:router input-channel="serviceBusRequest" ref="targetActionRequestRouter" />
+	<bean id="targetActionRequestRouter" class="it.sayservice.platform.core.bus.si.router.TargetActionRequestRouter">
+		<property name="channels">
+			<map>
+				<entry key="SERVICE_ACTION" value="handleServiceAction" />
+				<entry key="MANAGEMENT" value="handleManagementAction" />
+				<entry key="POI_SERVICE" value="handlePOIServiceAction" />
+				<entry key="SB_ADMINISTRATION" value="handleAdministrationAction" />
+				<entry key="SERVICE_DATA_CHANGE" value="handleServiceDataChangeAction" />
+			</map>
+		</property>
+	</bean>
+	
+	<!-- SERVICE_ACTION -->
+	<si:channel id="handleServiceAction" />
+	<si:router input-channel="handleServiceAction" ref="serviceActionRequestRouter" />
+	<bean id="serviceActionRequestRouter"
+		class="it.sayservice.platform.core.bus.si.router.OperationRequestRouter">
+		<property name="channels">
+			<map>
+				<entry key="INVOKE" value="performServiceInvoke" />
+				<entry key="RESTART" value="performServiceRestart" />
+				<entry key="LIST" value="performListServices" />
+				<entry key="REMOTE_INVOKE" value="performRemoteServiceInvoke" />				
+			</map>
+		</property>
+	</bean>
+	
+	<si:channel id="performServiceInvoke"/>
+	<si:service-activator input-channel="performServiceInvoke"
+		ref="busServiceActivator" method="invokeService" output-channel="platformResponse" />
+	
+	<si:channel id="performServiceRestart"/>
+	<si:service-activator input-channel="performServiceRestart"
+		ref="busServiceActivator" method="reloadService" output-channel="platformResponse" />		
+	
+	<si:channel id="listServices"/>
+	<si:service-activator input-channel="performListServices"
+		ref="busServiceActivator" method="listServices" output-channel="platformResponse" />
+	
+	<si:channel id="performRemoteServiceInvoke"/>
+	<si:service-activator input-channel="performRemoteServiceInvoke"
+		ref="busServiceActivator" method="invokeRemoteService" output-channel="platformResponse" />			
+	
+	<!-- MANAGEMENT -->
+	<si:channel id="handleManagementAction" />
+	<si:router input-channel="handleManagementAction" ref="managementActionRequestRouter" />
+	<bean id="managementActionRequestRouter"
+		class="it.sayservice.platform.core.bus.si.router.OperationRequestRouter">
+		<property name="channels">
+			<map>
+				<entry key="CONNECTOR_EXECUTION" value="monitoringOutgoingChannel" />
+				<entry key="NODE_EXECUTION" value="monitoringOutgoingChannel" />
+				<entry key="XSS_PARSING" value="monitoringOutgoingChannel" />
+				<entry key="DATAFLOW_EXECUTION" value="monitoringOutgoingChannel" />
+				<entry key="DATA_UPDATE" value="monitoringOutgoingChannel" />
+				<entry key="CUSTOM_EVENT" value="monitoringOutgoingChannel" />
+				<entry key="VARIABLE_VALIDATION" value="monitoringOutgoingChannel" />
+				<entry key="DATA_VALIDITY" value="monitoringOutgoingChannel" />
+				<entry key="UPLOAD_MONITORING_RULE" value="monitoringOutgoingChannel" />
+				<entry key="DELETE_MONITORING_RULE" value="monitoringOutgoingChannel" />
+				<entry key="INIT_SERVICE_RULE" value="monitoringOutgoingChannel" />
+				<entry key="GET_MONITORING_RULES" value="monitoringOutgoingChannel" />
+			</map>
+		</property>
+	</bean>
+	
+	<si:channel id="monitoringOutgoingChannel" />
+	<si:bridge input-channel="monitoringOutgoingChannel" output-channel="monitorProtoRequest" />
+	
+	<!-- POI_SERVICE -->
+	<si:channel id="handlePOIServiceAction" />
+	<si:router input-channel="handlePOIServiceAction" ref="poiServiceActionRequestRouter" />
+	<bean id="poiServiceActionRequestRouter"
+		class="it.sayservice.platform.core.bus.si.router.OperationRequestRouter">
+		<property name="channels">
+			<map>
+				<entry key="GET_POI" value="performGetPOIInvoke" />
+				<entry key="ADD_MISSING_POI" value="performAddMissingPOIInvoke" />
+				<entry key="ADD_FROM_CSV" value="performAddPOIFromCSVInvoke" />
+				<entry key="SYNCHRONIZE_POI_DB" value="performInvokeSynchronizePOIDB" />
+				<entry key="FIND_POIS" value="performInvokeFindPOIs" />
+				<entry key="POI_OP" value="performInvokePOIOperation" />
+				<entry key="FIND_MISSING_POI" value="performInvokeFindANFs" />
+				<entry key="MISSING_POI_OP" value="performInvokeANFPOIOperation" />
+				<entry key="POI_WRITER_OP" value="performInvokePOIWriterOperation" />
+			</map>
+		</property>
+	</bean>
+	
+	<si:channel id="performGetPOIInvoke"/>
+	<si:service-activator input-channel="performGetPOIInvoke"
+		ref="poiServiceActivator" method="invokeGetPOI" output-channel="platformResponse" />
+	
+	<si:channel id="performAddMissingPOIInvoke"/>
+	<si:service-activator input-channel="performAddMissingPOIInvoke"
+		ref="poiServiceActivator" method="invokeAddMissingPOI" output-channel="platformResponse" />
+	
+	<si:channel id="performAddPOIFromCSVInvoke"/>
+	<si:service-activator input-channel="performAddPOIFromCSVInvoke"
+		ref="poiServiceActivator" method="invokeAddfromCSV" output-channel="platformResponse" />
+	
+	<si:channel id="performInvokeSynchronizePOIDB"/>
+	<si:service-activator input-channel="performInvokeSynchronizePOIDB"
+		ref="poiServiceActivator" method="invokeSynchronizePOIDB" output-channel="platformResponse" />
+	
+	<si:channel id="performInvokeFindPOIs"/>
+	<si:service-activator input-channel="performInvokeFindPOIs"
+		ref="poiServiceActivator" method="invokeFindPOIs" output-channel="platformResponse" />
+	
+	<si:channel id="performInvokePOIOperation"/>
+	<si:service-activator input-channel="performInvokePOIOperation"
+		ref="poiServiceActivator" method="invokePOIOperation" output-channel="platformResponse" />
+	
+	<si:channel id="performInvokeFindANFs"/>
+	<si:service-activator input-channel="performInvokeFindANFs"
+		ref="poiServiceActivator" method="invokeFindANFs" output-channel="platformResponse" />
+	
+	<si:channel id="performInvokeANFPOIOperation"/>
+	<si:service-activator input-channel="performInvokeANFPOIOperation"
+		ref="poiServiceActivator" method="invokeANFPOIOperation" output-channel="platformResponse" />
+	
+	<si:channel id="performInvokePOIWriterOperation"/>
+	<si:service-activator input-channel="performInvokePOIWriterOperation"
+		ref="poiServiceActivator" method="invokePOIWriterOperation" output-channel="platformResponse" />
+	
+	<!-- ADMINISTRATION -->
+	<si:channel id="handleAdministrationAction" />
+	<si:router input-channel="handleAdministrationAction" ref="administrationRequestRouter" />
+	<bean id="administrationRequestRouter"
+		class="it.sayservice.platform.core.bus.si.router.OperationRequestRouter">
+		<property name="channels">
+			<map>
+				<entry key="CHANGE_STATUS" value="updateServiceStatus" />
+				<entry key="MODIFY_RESOURCE" value="modifyServiceResource" />
+				<entry key="MODIFY_RULE" value="modifyServiceRule" />
+				<entry key="GET_STATUS" value="getServiceStatus" />
+			</map>
+		</property>
+	</bean>
+	
+	<si:channel id="updateServiceStatus"/>
+	<si:service-activator input-channel="updateServiceStatus"
+		ref="administrationActivator" method="updateServiceStatus" output-channel="platformResponse" />
+			
+	<si:channel id="modifyServiceResource"/>
+	<si:service-activator input-channel="modifyServiceResource"
+		ref="administrationActivator" method="modifyServiceResource" output-channel="platformResponse" />
+		
+	<si:channel id="modifyServiceRule"/>
+	<si:service-activator input-channel="modifyServiceRule"
+		ref="administrationActivator" method="modifyServiceRule" output-channel="platformResponse" />	
+	
+	<si:channel id="getServiceStatus"/>
+	<si:service-activator input-channel="getServiceStatus"
+		ref="administrationActivator" method="getServiceStatus" output-channel="platformResponse" />
+			
+	
+	<!-- SERVICE_DATA_CHANGE -->
+	<si:channel id="handleServiceDataChangeAction" />
+	<si:router input-channel="handleServiceDataChangeAction" ref="serviceDataChangeActionRequestRouter" />
+	<bean id="serviceDataChangeActionRequestRouter"
+		class="it.sayservice.platform.core.bus.si.router.OperationRequestRouter">
+		<property name="channels">
+			<map>
+				<entry key="SUBSCRIBE" value="performServiceDataChangeSubscribeInvoke" />
+				<entry key="UNSUBSCRIBE" value="performServiceDataChangeUnsubscribeInvoke" />
+				<entry key="NOTIFY" value="performServiceDataChangeNotifyInvoke" />
+			</map>
+		</property>
+	</bean>
+	
+	<si:channel id="performServiceDataChangeSubscribeInvoke"/>
+	<si:service-activator input-channel="performServiceDataChangeSubscribeInvoke"
+		ref="serviceDataChangeActivator" method="invokeSubscribe" output-channel="platformResponse" />
+	
+	<si:channel id="performServiceDataChangeUnsubscribeInvoke"/>
+	<si:service-activator input-channel="performServiceDataChangeUnsubscribeInvoke"
+		ref="serviceDataChangeActivator" method="invokeUnsubscribe" output-channel="platformResponse" />
+	
+	<si:channel id="performServiceDataChangeNotifyInvoke"/>
+	<si:service-activator input-channel="performServiceDataChangeNotifyInvoke"
+		ref="serviceDataChangeActivator" method="invokeNotify" />
+		
+	<!-- PLATFORM_RESPONSE -->
+	<si:channel id="platformResponse" />
+	<si:header-value-router input-channel="platformResponse"
+		header-name="OUTCHANNEL">
+		<si:mapping value="PROTO" channel="SIProtoResponse" />
+		<si:mapping value="PROTOJMS" channel="JMSProtoResponse" />
+	</si:header-value-router>
+
+	<si:channel id="SIProtoResponse">
+		<!-- <si:queue capacity="512" /> -->
+	</si:channel>
+
+	<si:channel id="JMSProtoResponse">
+		<!-- <si:queue capacity="512" /> -->
+	</si:channel>
+	
+	<si:channel id="errorChannel">
+<!-- 		<si:queue capacity="128" /> -->
+	</si:channel>
+	<si:service-activator input-channel="errorChannel" ref="errorActivator" method="handleMessage" />
+
+	<si:poller id="poller" default="true" max-messages-per-poll="1" task-executor="poolTE">
+		<si:interval-trigger time-unit="MILLISECONDS" interval="50" />
+		<si:transactional transaction-manager="hibernateTransactionManager" 
+			propagation="REQUIRED" isolation="DEFAULT" timeout="30000" read-only="false" />
+	</si:poller>
+ 	
+	<task:executor id="poolTE" pool-size="10-128" queue-capacity="512" keep-alive="120"/>
+
+	<!-- FILE CHANNEL -->
+	<file:inbound-channel-adapter id="filesIn"
+    directory="file:${input.directory}"   
+    filename-regex="^sayCommand.*$"
+    prevent-duplicates="false">
+    <si:poller>
+    	<si:interval-trigger interval="5" time-unit="SECONDS" fixed-rate="true"/>
+    </si:poller>
+  </file:inbound-channel-adapter>
+  <file:file-to-string-transformer input-channel="filesIn" output-channel="performInFileEvent"
+  	delete-files="true" charset="UTF-8"/>
+	<si:service-activator input-channel="performInFileEvent"
+		ref="fileInputEventActivator" method="invokeInputFileEvent" />
+		
+	<!-- ACTIVATOR -->
+	<bean id="errorActivator" class="it.sayservice.platform.core.bus.si.activator.impl.ErrorActivatorImpl" />
+
+	<bean id="busServiceActivator"
+		class="it.sayservice.platform.core.bus.si.activator.impl.BusServiceActivatorImpl">
+		<constructor-arg ref="busServiceHandler" />
+		<constructor-arg ref="serviceStatusDAO" />
+		<constructor-arg ref="platformMessageGateway" />
+	</bean>
+	
+	<bean id="poiServiceActivator"
+		class="it.sayservice.platform.core.bus.si.activator.impl.POIServiceActivatorImpl">
+		<constructor-arg ref="poiService" />
+	</bean>
+	
+	<bean id="administrationActivator"
+		class="it.sayservice.platform.core.bus.si.activator.impl.AdministrationActivatorImpl">
+		<constructor-arg ref="serviceStatusDAO"/>
+		<constructor-arg  ref="resourceDataDAO"/>
+		<constructor-arg  ref="validationRulesDAO"/>
+		<constructor-arg ref="platformMessageGateway" />
+	</bean>	  
+
+	<bean id="serviceDataChangeActivator"
+		class="it.sayservice.platform.core.bus.si.activator.impl.ServiceDataChangeActivatorImpl">
+		<constructor-arg ref="busServiceHandler" />
+		<constructor-arg ref="platformGenericThreadPoolTaskExecutor" />
+		<constructor-arg ref="serviceDataChangeListeners" />
+	</bean>
+
+	<bean id="fileInputEventActivator"
+		class="it.sayservice.platform.core.bus.si.activator.impl.FileInputEventActivatorImpl">
+		<constructor-arg ref="platformMessageGateway" />
+	</bean>
+	
+	<!-- GATEWAY -->
+	<si:gateway id="platformMessageGateway"
+		service-interface="it.sayservice.platform.core.message.gateway.PlatformMessageGateway">
+		<si:method name="sendMessage" request-channel="SIProtoRequest" reply-channel="SIProtoResponse" reply-timeout="#{1000L*60*60}"/>
+		<si:method name="sendAndForget" request-channel="SIProtoRequest" />
+	</si:gateway>
+	
+	<bean id="platformMessageGatewayFactory"
+		class="it.sayservice.platform.core.message.gateway.PlatformMessageGatewayFactory"
+		lazy-init="false" >
+		<constructor-arg ref="platformMessageGateway"/>
+	</bean>
+	
+	
+</beans>

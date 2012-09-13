@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-3.0.xsd
+	http://www.springframework.org/schema/util
+  http://www.springframework.org/schema/util/spring-util-3.0.xsd"
+	default-lazy-init="false">
+
+	<!-- DataSource -->
+	 <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+    <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+    <property name="url" value="jdbc:mysql://localhost:3306/smart"/>
+    <property name="username" value="smart"/>
+    <property name="password" value="smart"/>
+    <property name="maxActive" value="10"/>
+	</bean>
+	
+	<bean id="appConfig" class="it.sayservice.platform.core.common.util.AppConfig">
+		<property name="applicationId">
+			<value>test</value>
+		</property>
+	</bean>
+	
+	<!-- POI Service -->
+
+	<bean name="poiService" class="it.sayservice.platform.core.bus.poi.impl.LocalPOIService">
+		<constructor-arg ref="poiDataHandler" />
+		<property name="parameters">
+		<map>
+			<entry key="getPOIURL" value="http://test.sayservice.it/poiservice/getpoi"/>
+			<entry key="addMissingAddressURL" value="http://test.sayservice.it/poiservice/addmissingpoi"/>
+			<entry key="synchronizePOIDBURL" value="http://test.sayservice.it/poiservice/synchronizepoidb"/>
+			<entry key="authKey" value="testAuthKey"/>
+		</map>
+		</property>
+	</bean>
+	
+	
+	<!-- Services -->
+	<import resource="service/unitnnews/unitnnews.xml" />
+	
+	<!-- Monitoring Conf -->
+  <util:map id="defaultEventPersistenceConf">
+      <entry key="maxEventNum">
+          <value type="java.lang.Long">500</value>
+      </entry>
+      <entry key="storagePeriod">
+          <value type="java.lang.Long">#{1000L*60*60*24*30}</value>
+      </entry>
+  </util:map>
+  
+  <!-- Monitorng Rules -->
+  <util:list id="monitoringRulesFiles">
+      <value>service/unitnnews/monitoring-GetOperaNews.xml</value>
+      <value>service/unitnnews/monitoring-GetUnitnNews.xml</value>
+      <value>service/unitnnews/monitoring-GetCiscaNews.xml</value>
+  </util:list>
+    
+	<!-- Application properties -->
+	<context:property-placeholder properties-ref="defaultValues"/>
+	<bean id="defaultValues" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+    <property name="properties">
+        <props>
+            <prop key="input.directory">/tmp</prop>
+            <prop key="hibernate.search.directory">/tmp</prop>
+            <prop key="mail.smtp.host">localhost</prop>
+            <prop key="mail.smtp.port">25</prop>
+            <prop key="mail.from">noreplay@sayservice.it</prop>
+            <prop key="mail.to">nobody@sayservice.it</prop>
+            <prop key="mail.subject">sayService Platform alert</prop>
+			<prop key="mongodb.host">127.0.0.1</prop>
+             <prop key="mongodb.port">27017</prop> 
+             <prop key="mongodb.connections">250</prop> 
+             <prop key="mongodb.db">test</prop> 
+	         <prop key="mongodb.collection">serviceData</prop> 
+        </props>
+    </property>
+	</bean>
+	
+	<util:map id="serviceDataChangeListeners" map-class="java.util.HashMap">
+	</util:map>
+	
+	<util:list id="indexingServiceConverters" list-class="java.util.ArrayList">
+	</util:list>
+		
+	<util:map id="dataStores" map-class="java.util.HashMap">
+	</util:map>	
+	
+	<util:list id="serviceDescriptionList">
+	</util:list>
+			
+</beans>

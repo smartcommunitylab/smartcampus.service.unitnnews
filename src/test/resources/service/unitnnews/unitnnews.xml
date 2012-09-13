@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context" xmlns:util="http://www.springframework.org/schema/util" xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-3.0.xsd
+	http://www.springframework.org/schema/util
+	http://www.springframework.org/schema/util/spring-util-3.0.xsd" default-lazy-init="false">
+
+	<!-- Wrapper bean -->
+	<util:map id="defaultConf">
+		<entry key="storable">
+			<value type="java.lang.Boolean">false</value>
+		</entry>
+		<entry key="automaticRefresh">
+			<value type="java.lang.Boolean">false</value>
+		</entry>
+		<entry key="delay">
+			<value type="java.lang.Long">#{1000L*5}</value>
+		</entry>
+		<entry key="period">
+			<value type="java.lang.String">#{1000L*60*60*8}</value>
+		</entry>
+		<entry key="periodOnDefault">
+			<value type="java.lang.String">#{1000L*60*60*8}</value>
+		</entry>
+		<entry key="periodOnFailure">
+			<value type="java.lang.String">#{1000L*60*60*24}</value>
+		</entry>
+		<entry key="cacheValidityPeriod">
+			<value type="java.lang.Long">#{1000L*60*60*24*15}</value>
+		</entry>
+		<entry key="validityPeriod">
+			<value type="java.lang.Long">#{1000L*60*60*24*30}</value>
+		</entry>
+		<entry key="serviceBlocked">
+			<value type="java.lang.Boolean">false</value>
+		</entry>
+		<entry key="dataFlowInvokable">
+			<value type="java.lang.Boolean">true</value>
+		</entry>
+	</util:map>
+
+	<util:map id="emptyParams" map-class="java.util.HashMap">
+	</util:map>
+
+	<bean id="operaUnitnService" class=" smartcampus.service.unitnnews.impl.ServiceImpl">
+		<constructor-arg ref="serviceParameters"/>
+		<constructor-arg>
+			<map>
+				<entry key="maxEventNum">
+					<value type="java.lang.Long">250</value>
+				</entry>
+				<entry key="storagePeriod">
+					<value type="java.lang.Long">#{1000L*60*60*24*30}</value>
+				</entry>
+			</map>
+		</constructor-arg>
+		<constructor-arg>
+			<map>
+				<entry key="GetOperaNews">
+					<ref bean="defaultConf"/>
+				</entry>
+				<entry key="GetUnitnNews">
+					<ref bean="defaultConf"/>
+				</entry>				
+				<entry key="GetCiscaNews">
+					<ref bean="defaultConf"/>
+				</entry>							
+			</map>
+		</constructor-arg>
+		<constructor-arg>
+			<map>
+				<entry key="GetOperaNews">
+					<util:list>
+						<ref bean="emptyParams"/>
+					</util:list>
+				</entry>
+				<entry key="GetUnitnNews">
+					<util:list>
+						<ref bean="emptyParams"/>
+					</util:list>
+				</entry>				
+				<entry key="GetCiscaNews">
+					<util:list>
+						<ref bean="emptyParams"/>
+					</util:list>
+				</entry>						
+			</map>
+		</constructor-arg>
+		<constructor-arg ref="dataStores"/>
+		<constructor-arg ref="localServiceExecutorParameters"/>
+		<property name="filterClassNames">
+			<map>
+			</map>
+		</property>
+	</bean>
+
+</beans>
