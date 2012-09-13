@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>smartcampus</groupId>
-  <artifactId>smartcampus.service.unitnnews</artifactId>
-  <version>1.0</version>
-  <packaging>jar</packaging>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>smartcampus</groupId>
+	<artifactId>smartcampus.service.unitnnews</artifactId>
+	<version>1.0</version>
+	<packaging>bundle</packaging>
 
 	<parent>
 		<groupId>it.sayservice.platform</groupId>
@@ -12,13 +12,13 @@
 	</parent>
 
 	<dependencies>
-	
-	<dependency>
-		<groupId>net.sourceforge.htmlcleaner</groupId>
-		<artifactId>htmlcleaner</artifactId>
-		<version>2.2</version>
-	</dependency>	
-  	
+
+		<dependency>
+			<groupId>net.sourceforge.htmlcleaner</groupId>
+			<artifactId>htmlcleaner</artifactId>
+			<version>2.2</version>
+		</dependency>
+
 	</dependencies>
 
 
@@ -41,7 +41,90 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>		
+			</plugin>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Include-Resource>{maven-resources}</Include-Resource>
+						<Export-Package>service.unitnnews.*,smartcampus.service.unitnnews.*</Export-Package>
+						<Private-Package>!*</Private-Package>
+						<DynamicImport-Package>*</DynamicImport-Package>
+						<Import-Package>org.apache.log4j.*,</Import-Package>
+					</instructions>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>it.sayservice.platform</groupId>
+				<artifactId>sb-compiler-plugin</artifactId>
+				<configuration>
+					<services>
+						<service>
+							<serviceClassName>smartcampus.service.unitnnews.impl.ServiceImpl</serviceClassName>
+							<methods>
+								<method>
+									<methodName>GetOperaNews</methodName>
+									<statusParameters>
+										<storable>true</storable>
+										<automaticRefresh>true</automaticRefresh>
+										<delay>#{1000L*15}</delay>
+										<period>#{1000L*60*60*12}</period>
+										<periodOnDefault>#{1000L*60*60*12}</periodOnDefault>
+										<periodOnFailure>#{1000L*60*60*24}</periodOnFailure>
+										<cacheValidityPeriod>#{1000L*60*60*24*15}</cacheValidityPeriod>
+										<validityPeriod>#{1000L*60*60*24*30}</validityPeriod>
+										<serviceBlocked>false</serviceBlocked>
+										<dataFlowInvokable>true</dataFlowInvokable>
+										<runnableAfterDelay>true</runnableAfterDelay>
+									</statusParameters>
+								</method>
+								<method>
+									<methodName>GetUnitnNews</methodName>
+									<statusParameters>
+										<storable>true</storable>
+										<automaticRefresh>true</automaticRefresh>
+										<delay>#{1000L*15}</delay>
+										<period>#{1000L*60*60*12}</period>
+										<periodOnDefault>#{1000L*60*60*12}</periodOnDefault>
+										<periodOnFailure>#{1000L*60*60*24}</periodOnFailure>
+										<cacheValidityPeriod>#{1000L*60*60*24*15}</cacheValidityPeriod>
+										<validityPeriod>#{1000L*60*60*24*30}</validityPeriod>
+										<serviceBlocked>false</serviceBlocked>
+										<dataFlowInvokable>true</dataFlowInvokable>
+										<runnableAfterDelay>true</runnableAfterDelay>
+									</statusParameters>
+								</method>
+								<method>
+									<methodName>GetCiscaNews</methodName>
+									<statusParameters>
+										<storable>true</storable>
+										<automaticRefresh>true</automaticRefresh>
+										<delay>#{1000L*15}</delay>
+										<period>#{1000L*60*60*12}</period>
+										<periodOnDefault>#{1000L*60*60*12}</periodOnDefault>
+										<periodOnFailure>#{1000L*60*60*24}</periodOnFailure>
+										<cacheValidityPeriod>#{1000L*60*60*24*15}</cacheValidityPeriod>
+										<validityPeriod>#{1000L*60*60*24*30}</validityPeriod>
+										<serviceBlocked>false</serviceBlocked>
+										<dataFlowInvokable>true</dataFlowInvokable>
+										<runnableAfterDelay>true</runnableAfterDelay>
+									</statusParameters>
+								</method>
+							</methods>
+						</service>
+					</services>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>sbbuild</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
