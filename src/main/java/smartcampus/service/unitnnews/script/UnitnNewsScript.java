@@ -168,8 +168,15 @@ public class UnitnNewsScript {
 			String xmlString = cleanElement(content);
 
 			NewsEntry.Builder entry = NewsEntry.newBuilder();
-			entry.setTitle("");
-			entry.setContent(xmlString);
+			
+			int index = xmlString.indexOf(":");
+			if (index == -1) {
+			entry.setTitle(xmlString);
+			entry.setContent("");
+			} else {
+				entry.setTitle(xmlString.substring(0, index));
+				entry.setContent(xmlString.substring(index + 1).trim());
+			}
 			entry.setSource("Cisca");
 
 			result.add(entry.build());
