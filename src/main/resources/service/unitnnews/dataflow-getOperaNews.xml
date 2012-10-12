@@ -12,7 +12,7 @@
 		<body>new java.util.ArrayList();</body>
 	</variable>	
 
-	<httpConnector name="unitnnewsConnector" method="GET" encoding="UTF-8"/>
+	<httpConnector name="unitnnewsConnector" method="GET" encoding="cp1252"/>
 
 	<connect name="c1" connector="unitnnewsConnector" outputVar="operanewsHome">
 		<properties>

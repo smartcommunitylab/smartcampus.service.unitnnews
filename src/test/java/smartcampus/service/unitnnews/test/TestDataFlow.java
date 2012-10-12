@@ -1,62 +1,41 @@
 package smartcampus.service.unitnnews.test;
 
-import it.sayservice.platform.core.bus.common.exception.PersistenceException;
-import it.sayservice.platform.core.bus.service.handler.BusServiceHandler;
-import it.sayservice.platform.core.bus.service.persistence.PersistenceEngine;
-import it.sayservice.platform.core.common.exception.EntityNotFoundException;
+import it.sayservice.platform.servicebus.test.DataFlowTestHelper;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 import junit.framework.TestCase;
-
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-import com.google.protobuf.InvalidProtocolBufferException;
+import smartcampus.service.unitnnews.data.message.Unitnnews.NewsEntry;
+import smartcampus.service.unitnnews.impl.GetOperaNewsDataFlow;
 
 public class TestDataFlow extends TestCase {
-	public void testRun() throws PersistenceException, EntityNotFoundException, InvalidProtocolBufferException {
-		ApplicationContext context = new ClassPathXmlApplicationContext(new String[] { "/test-context.xml", "/applicationContext.xml" });
-		assertNotNull(context);
-		PersistenceEngine persistenceEngine = (PersistenceEngine) context.getBean("busPersistenceEngineDAO");
-		assertNotNull(persistenceEngine);
 
-		BusServiceHandler busServiceHandler = (BusServiceHandler) context.getBean("busServiceHandler");
-		assertNotNull(busServiceHandler);
-		busServiceHandler.start();
-
-//		System.out.println("Waiting...");
-//		Scanner in = new Scanner(System.in);
-//		in.nextLine();
-
-		Map<String, Object> emptyPars = new HashMap<String, Object>();
-		
-		Map<String, Object> pars = new HashMap<String, Object>();
-//		pars.put("baseurl", "http://www.unitn.it");
-//		pars.put("variableurl", "ateneo");
-//		pars.put("source", "ateneo");
-		pars.put("baseurl", "http://www.unisport.tn.it");
-		pars.put("variableurl", "");
-		pars.put("source", "unisport");
-		
-		Object object = null;
+	public void test() {
 		try {
-//			object = busServiceHandler.invokeService("smartcampus.service.unitnnews", "GetOperaNews", emptyPars, null);
-//			System.out.println(object);
-			object = busServiceHandler.invokeService("smartcampus.service.unitnnews", "GetUnitnNews", pars, null);
-			System.out.println(object);
-//			object = busServiceHandler.invokeService("smartcampus.service.unitnnews", "GetCiscaNews", emptyPars, null);
-//			System.out.println(object);
+			Map<String, Object> emptyPars = new HashMap<String, Object>();
+			
+			Map<String, Object> pars = new HashMap<String, Object>();
+//			pars.put("baseurl", "http://www.unisport.tn.it");
+//			pars.put("variableurl", "");
+//			pars.put("source", "unisport");			
+			// pars.put("baseurl", "http://www.unitn.it");
+			// pars.put("variableurl", "ateneo");
+			// pars.put("source", "ateneo");
+			
+			DataFlowTestHelper helper = new DataFlowTestHelper();
+			Map<String, Object> out = helper.executeDataFlow("smartcampus.service.unitnnews", "GetOperaNews", new GetOperaNewsDataFlow(), emptyPars);
+//			Map<String, Object> out = helper.executeDataFlow("smartcampus.service.unitnnews", "GetUnitnNews", new GetUnitnNewsDataFlow(), pars);
+//			Map<String, Object> out = helper.executeDataFlow("smartcampus.service.unitnnews", "GetCiscaNews", new GetCiscaNewsDataFlow(), emptyPars);
+			for (NewsEntry news : (List<NewsEntry>)out.get("data")) {
+				System.out.println(news.getTitle());
+				System.out.println(news.getContent());
+				System.out.println("----");
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		System.out.println("Waiting...");
-		Scanner in = new Scanner(System.in);
-		in.nextLine();		
-		
 	}
 
 }
