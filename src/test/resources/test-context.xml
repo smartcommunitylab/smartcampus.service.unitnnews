@@ -59,6 +59,7 @@
       <value>service/unitnnews/monitoring-GetOperaNews.xml</value>
       <value>service/unitnnews/monitoring-GetUnitnNews.xml</value>
       <value>service/unitnnews/monitoring-GetCiscaNews.xml</value>
+      <value>service/unitnnews/monitoring-GetDisiNews.xml</value>
   </util:list>
     
 	<!-- Application properties -->

@@ -65,7 +65,10 @@
 				</entry>				
 				<entry key="GetCiscaNews">
 					<ref bean="defaultConf"/>
-				</entry>							
+				</entry>	
+				<entry key="GetDisiNews">
+					<ref bean="defaultConf"/>
+				</entry>											
 			</map>
 		</constructor-arg>
 		<constructor-arg>
@@ -84,7 +87,12 @@
 					<util:list>
 						<ref bean="emptyParams"/>
 					</util:list>
-				</entry>						
+				</entry>		
+				<entry key="GetDisiNews">
+					<util:list>
+						<ref bean="emptyParams"/>
+					</util:list>
+				</entry>									
 			</map>
 		</constructor-arg>
 		<constructor-arg ref="dataStores"/>

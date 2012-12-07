@@ -69,6 +69,9 @@ public class UnitnNewsScript {
 
 		String xmlString = cleanElement(content);
 
+		// title = new String(title.getBytes("ISO-8859-1"), "UTF-8");
+		// title = new String(title.getBytes(), "ISO-8859-1");
+
 		NewsEntry.Builder result = NewsEntry.newBuilder();
 		result.setTitle(title);
 		result.setContent(xmlString);
@@ -154,7 +157,6 @@ public class UnitnNewsScript {
 		HtmlParser parser = new HtmlParser(uacontext, doc);
 		parser.parse(new StringReader(ns));
 
-		
 		XPathFactory xPathfactory = XPathFactory.newInstance();
 		XPath xpath = xPathfactory.newXPath();
 		XPathExpression expr = xpath.compile("//table[@class=\"avviso\"]/tbody/tr/td");
@@ -168,11 +170,11 @@ public class UnitnNewsScript {
 			String xmlString = cleanElement(content);
 
 			NewsEntry.Builder entry = NewsEntry.newBuilder();
-			
+
 			int index = xmlString.indexOf(":");
 			if (index == -1) {
-			entry.setTitle(xmlString);
-			entry.setContent("");
+				entry.setTitle(xmlString);
+				entry.setContent("");
 			} else {
 				entry.setTitle(xmlString.substring(0, index));
 				entry.setContent(xmlString.substring(index + 1).trim());
@@ -183,7 +185,46 @@ public class UnitnNewsScript {
 		}
 
 		return result;
-		
+
+	}
+
+	public static List<NewsEntry> extractDisiContent(Document doc) throws XPathExpressionException {
+		List<NewsEntry> result = new ArrayList<NewsEntry>();
+
+		XPathFactory xPathfactory = XPathFactory.newInstance();
+		XPath xpath = xPathfactory.newXPath();
+
+		XPathExpression expr = xpath.compile("//div[@class=\"elem_news elem-even\"]");
+		extractDisiContent(doc, expr, result);
+		expr = xpath.compile("//div[@class=\"elem_news elem-odd\"]");
+		extractDisiContent(doc, expr, result);
+
+		return result;
+	}
+
+	private static void extractDisiContent(Document doc, XPathExpression expr, List<NewsEntry> result) throws XPathExpressionException {
+		NodeList nodes = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+		for (int i = 0; i < nodes.getLength(); i++) {
+			Element element = (Element) nodes.item(i);
+			NewsEntry.Builder builder = NewsEntry.newBuilder();
+			builder.setSource("Disi");
+			String date = "";
+			String body = "";			
+			for (int j = 0; j < element.getChildNodes().getLength(); j++) {
+				if (element.getChildNodes().item(j) instanceof Element) {
+					Element child = (Element) element.getChildNodes().item(j);
+					if ("elem_title".equals(child.getAttribute("class"))) {
+						builder.setTitle(child.getTextContent());
+					} else if ("elem_body".equals(child.getAttribute("class"))) {
+						body = child.getTextContent();
+					} else if ("elem_date".equals(child.getAttribute("class"))) {
+						date = child.getTextContent();
+					}
+				}
+				builder.setContent(date + "\n" + body);
+			}
+			result.add(builder.build());
+		}
 	}
 
 	private static String cleanElement(Element element) throws TransformerException {

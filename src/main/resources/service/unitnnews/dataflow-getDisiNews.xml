@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataflow xmlns="http://www.example.org/mml-schema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.example.org/mml-schema mml-schema.xsd ">
+
+	<variable name="disinewsHome" type="org.w3c.dom.Document" />
+	<variable name="entryPage" type="org.w3c.dom.Document" />
+
+	<variable name="newsEntry" type="java.util.Collection">
+		<body>new java.util.ArrayList();</body>
+	</variable>	
+
+	<httpConnector name="unitnnewsConnector" method="GET" encoding="ISO-8859-1"/>
+
+	<connect name="c1" connector="unitnnewsConnector" outputVar="disinewsHome">
+		<properties>
+			<property name="url">
+				<value>"http://disi.unitn.it/announcements"</value>
+			</property>
+		</properties>
+	</connect>
+
+	<script outputVar="output" writeMethod="addAll" writeAction="append">
+		<className>smartcampus.service.unitnnews.script.UnitnNewsScript</className>
+		<method>extractDisiContent</method>
+		<variables>
+			<value>disinewsHome</value>
+		</variables>		
+	</script>
+	
+</dataflow>
