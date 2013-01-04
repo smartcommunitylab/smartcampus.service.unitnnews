@@ -66,11 +66,14 @@
 							<methods>
 								<method>
 									<methodName>GetOperaNews</methodName>
-									<statusParameters>
+	                                 <defaultParameters>
+	                                     <parameters/>
+	                                 </defaultParameters> 
+	                                 <statusParameters>
 										<storable>true</storable>
 										<automaticRefresh>true</automaticRefresh>
 										<delay>#{1000L*15}</delay>
-										<period>#{1000L*60*60*12}</period>
+										<period>#{1000L*60*60*2}</period>
 										<periodOnDefault>#{1000L*60*60*12}</periodOnDefault>
 										<periodOnFailure>#{1000L*60*60*24}</periodOnFailure>
 										<cacheValidityPeriod>#{1000L*60*60*24*15}</cacheValidityPeriod>
@@ -82,11 +85,14 @@
 								</method>
 								<method>
 									<methodName>GetUnitnNews</methodName>
+	                                 <defaultParameters>
+	                                     <parameters/>
+	                                 </defaultParameters> 
 									<statusParameters>
 										<storable>true</storable>
 										<automaticRefresh>true</automaticRefresh>
 										<delay>#{1000L*15}</delay>
-										<period>#{1000L*60*60*12}</period>
+										<period>#{1000L*60*60*2}</period>
 										<periodOnDefault>#{1000L*60*60*12}</periodOnDefault>
 										<periodOnFailure>#{1000L*60*60*24}</periodOnFailure>
 										<cacheValidityPeriod>#{1000L*60*60*24*15}</cacheValidityPeriod>
@@ -98,11 +104,14 @@
 								</method>
 								<method>
 									<methodName>GetCiscaNews</methodName>
+	                                 <defaultParameters>
+	                                     <parameters/>
+	                                 </defaultParameters> 
 									<statusParameters>
 										<storable>true</storable>
 										<automaticRefresh>true</automaticRefresh>
 										<delay>#{1000L*15}</delay>
-										<period>#{1000L*60*60*12}</period>
+										<period>#{1000L*60*60*2}</period>
 										<periodOnDefault>#{1000L*60*60*12}</periodOnDefault>
 										<periodOnFailure>#{1000L*60*60*24}</periodOnFailure>
 										<cacheValidityPeriod>#{1000L*60*60*24*15}</cacheValidityPeriod>
@@ -114,11 +123,14 @@
 								</method>
 								<method>
 									<methodName>GetDisiNews</methodName>
+	                                 <defaultParameters>
+	                                     <parameters/>
+	                                 </defaultParameters> 
 									<statusParameters>
 										<storable>true</storable>
 										<automaticRefresh>true</automaticRefresh>
 										<delay>#{1000L*15}</delay>
-										<period>#{1000L*60*60*12}</period>
+										<period>#{1000L*60*60*2}</period>
 										<periodOnDefault>#{1000L*60*60*12}</periodOnDefault>
 										<periodOnFailure>#{1000L*60*60*24}</periodOnFailure>
 										<cacheValidityPeriod>#{1000L*60*60*24*15}</cacheValidityPeriod>
