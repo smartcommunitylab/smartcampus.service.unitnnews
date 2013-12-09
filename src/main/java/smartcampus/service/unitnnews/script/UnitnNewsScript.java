@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,8 +55,6 @@ import smartcampus.service.unitnnews.data.message.Unitnnews.NewsEntry;
 
 public class UnitnNewsScript {
 
-	private static final String OPERAUNITN_PREFIX = "http://www.operauni.tn.it";
-
 	public static List<String> extractOperaLinks(Document doc) throws XPathExpressionException, ParserConfigurationException {
 		XPathFactory xPathfactory = XPathFactory.newInstance();
 		XPath xpath = xPathfactory.newXPath();
@@ -73,7 +70,7 @@ public class UnitnNewsScript {
 		return result;
 	}
 
-	public static NewsEntry extractOperaContent(Document doc) throws XPathExpressionException, ParserConfigurationException, UnsupportedEncodingException, DOMException, TransformerException {
+	public static NewsEntry extractOperaContent(Document doc, String link) throws XPathExpressionException, ParserConfigurationException, UnsupportedEncodingException, DOMException, TransformerException {
 		XPathFactory xPathfactory = XPathFactory.newInstance();
 		XPath xpath = xPathfactory.newXPath();
 		XPathExpression expr = xpath.compile("//div[@class=\"titleBlock\"]/div[@class=\"left\"]");
@@ -91,13 +88,31 @@ public class UnitnNewsScript {
 		result.setTitle(title);
 		result.setContent(xmlString);
 		result.setSource("Opera Universitaria");
+		result.setLink("http://www.operauni.tn.it"+link);
 
 		return result.build();
 	}
 
 	// /////////////////////
 
-	public static List<String> extractUnitnLinks(Document doc) throws XPathExpressionException, ParserConfigurationException {
+	public static List<String> extractUnitnLinks(String s, String baseurl, String variableurl) throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
+		CleanerProperties props = new CleanerProperties();
+
+		props.setTranslateSpecialEntities(true);
+		props.setTransResCharsToNCR(true);
+		props.setOmitComments(true);
+		TagNode tagNode = new HtmlCleaner(props).clean(s);
+
+		String ns = new PrettyXmlSerializer(props).getAsString(tagNode);
+
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document doc = builder.newDocument();
+		UserAgentContext uacontext = new SimpleUserAgentContext();
+		HtmlParser parser = new HtmlParser(uacontext, doc);
+		parser.parse(new StringReader(ns));
+
+		
 		XPathFactory xPathfactory = XPathFactory.newInstance();
 		XPath xpath = xPathfactory.newXPath();
 		XPathExpression expr = xpath.compile("//div[@class=\"views-field-title\"]/span/a");
@@ -106,13 +121,14 @@ public class UnitnNewsScript {
 		NodeList nodes = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
 		for (int i = 0; i < nodes.getLength(); i++) {
 			String link = ((Element) nodes.item(i)).getAttribute("href");
+			if (!link.startsWith("http://")) link = baseurl + link;
 			result.add(link);
 		}
 
 		return result;
 	}
 
-	public static NewsEntry extractUnitnContent(Document doc, String source) throws XPathExpressionException, ParserConfigurationException, UnsupportedEncodingException, DOMException, TransformerException {
+	public static NewsEntry extractUnitnContent(Document doc, String source, String link) throws XPathExpressionException, ParserConfigurationException, UnsupportedEncodingException, DOMException, TransformerException {
 		XPathFactory xPathfactory = XPathFactory.newInstance();
 		XPath xpath = xPathfactory.newXPath();
 		XPathExpression expr = xpath.compile("//*[@class=\"title\"]");
@@ -127,7 +143,8 @@ public class UnitnNewsScript {
 		result.setTitle(title.trim());
 		result.setContent(xmlString);
 		result.setSource(source);
-
+		result.setLink(link);
+		
 		return result.build();
 	}
 

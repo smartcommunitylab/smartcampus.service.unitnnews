@@ -65,6 +65,7 @@
 		<method>extractOperaContent</method>
 		<variables>
 			<value>entryPage</value>
+			<value>link</value>
 		</variables>		
 	</script>		
 	

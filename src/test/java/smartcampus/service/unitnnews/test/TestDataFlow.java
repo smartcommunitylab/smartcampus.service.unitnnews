@@ -36,7 +36,7 @@ public class TestDataFlow extends TestCase {
 //			pars.put("variableurl", "");
 //			pars.put("source", "unisport");			
 			 pars.put("baseurl", "http://www.unitn.it");
-			 pars.put("variableurl", "scienze");
+			 pars.put("variableurl", "disi");
 			 pars.put("source", "Scienze");
 			
 			DataFlowTestHelper helper = new DataFlowTestHelper();

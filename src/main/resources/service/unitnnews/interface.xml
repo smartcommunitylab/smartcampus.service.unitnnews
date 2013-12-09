@@ -29,16 +29,12 @@
 		<operation name="GetCiscaNews" storable="true">
 			<output type="smartcampus.service.unitnnews.data.message.Unitnnews$NewsEntry" repeated="true"/>
 		</operation>		
-		<operation name="GetDisiNews" storable="true">
-			<output type="smartcampus.service.unitnnews.data.message.Unitnnews$NewsEntry" repeated="true"/>
-		</operation>		
 	</interface>
 
 	<implementation package="smartcampus.service.unitnnews">
 		<operationImpl name="GetOperaNews"/>
 		<operationImpl name="GetUnitnNews"/>
 		<operationImpl name="GetCiscaNews"/>
-		<operationImpl name="GetDisiNews"/>
 	</implementation>
 
 </service-definition>

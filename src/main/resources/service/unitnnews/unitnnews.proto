@@ -18,5 +18,7 @@ import "core.proto";
 message NewsEntry {
 	required string title = 1;
 	required string content = 2;
-	optional string source = 3;
+	optional string link = 3;
+	optional string source = 4;
+	
 }
