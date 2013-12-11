@@ -23,7 +23,7 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 import smartcampus.service.unitnnews.data.message.Unitnnews.NewsEntry;
-import smartcampus.service.unitnnews.impl.GetOperaNewsDataFlow;
+import smartcampus.service.unitnnews.impl.GetUnitnNewsDataFlow;
 
 public class TestDataFlow extends TestCase {
 
@@ -35,13 +35,13 @@ public class TestDataFlow extends TestCase {
 //			pars.put("baseurl", "http://www.unisport.tn.it");
 //			pars.put("variableurl", "");
 //			pars.put("source", "unisport");			
-			// pars.put("baseurl", "http://www.unitn.it");
-			// pars.put("variableurl", "ateneo");
-			// pars.put("source", "ateneo");
+			 pars.put("baseurl", "http://www.unitn.it");
+			 pars.put("variableurl", "disi");
+			 pars.put("source", "Scienze");
 			
 			DataFlowTestHelper helper = new DataFlowTestHelper();
-			Map<String, Object> out = helper.executeDataFlow("smartcampus.service.unitnnews", "GetOperaNews", new GetOperaNewsDataFlow(), emptyPars);
-//			Map<String, Object> out = helper.executeDataFlow("smartcampus.service.unitnnews", "GetUnitnNews", new GetUnitnNewsDataFlow(), pars);
+//			Map<String, Object> out = helper.executeDataFlow("smartcampus.service.unitnnews", "GetOperaNews", new GetOperaNewsDataFlow(), emptyPars);
+			Map<String, Object> out = helper.executeDataFlow("smartcampus.service.unitnnews", "GetUnitnNews", new GetUnitnNewsDataFlow(), pars);
 //			Map<String, Object> out = helper.executeDataFlow("smartcampus.service.unitnnews", "GetCiscaNews", new GetCiscaNewsDataFlow(), emptyPars);
 			for (NewsEntry news : (List<NewsEntry>)out.get("data")) {
 				System.out.println(news.getTitle());

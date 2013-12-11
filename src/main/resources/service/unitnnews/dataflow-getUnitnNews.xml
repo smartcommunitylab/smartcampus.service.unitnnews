@@ -21,7 +21,7 @@
 	<input name="source" type="String" />
 	
 
-	<variable name="unitnnewsHome" type="org.w3c.dom.Document" />
+	<variable name="unitnnewsHome" type="String" />
 	<variable name="entryPage" type="org.w3c.dom.Document" />
 
 	<variable name="links" type="java.util.Collection">
@@ -34,7 +34,7 @@
 
 	<httpConnector name="unitnnewsConnector" method="GET" encoding="UTF-8"/>
 
-	<connect name="c1" connector="unitnnewsConnector" outputVar="unitnnewsHome">
+	<connect name="c1" connector="unitnnewsConnector" outputVar="unitnnewsHome" transformer="string">
 		<properties>
 			<property name="url">
 				<value>baseurl +"/" + variableurl + "/news"</value>
@@ -47,6 +47,8 @@
 		<method>extractUnitnLinks</method>
 		<variables>
 			<value>unitnnewsHome</value>
+			<value>baseurl</value>
+			<value>variableurl</value>
 		</variables>		
 	</script>
 	
@@ -60,7 +62,7 @@
 		<connect name="c2" connector="unitnnewsConnector" outputVar="entryPage" onError="continue">
 			<properties>
 				<property name="url">
-					<value>baseurl + link</value>
+					<value>link</value>
 				</property>
 			</properties>
 		</connect>	
@@ -71,6 +73,7 @@
 		<variables>
 			<value>entryPage</value>
 			<value>source</value>
+			<value>link</value>
 		</variables>				
 	</script>		
 	
